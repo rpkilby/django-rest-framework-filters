@@ -1,5 +1,14 @@
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, connections
+
+
+class ExplainQuerySet(models.QuerySet):
+
+    def explain(self):
+        cursor = connections[self.db].cursor()
+        query, params = self.query.sql_with_params()
+        cursor.execute('explain query plan %s' % query, params)
+        return '\n'.join('|'.join([str(e) for e in line]) for line in cursor.fetchall())
 
 
 class Note(models.Model):
@@ -58,3 +67,17 @@ class BlogPost(models.Model):
     content = models.TextField()
     tags = models.ManyToManyField(Tag)
     publish_date = models.DateField(null=True)
+
+
+class Blog(models.Model):
+    name = models.CharField(max_length=100)
+
+    objects = ExplainQuerySet.as_manager()
+
+
+class Entry(models.Model):
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    headline = models.CharField(max_length=240)
+    pub_date = models.DateField(null=True)
+
+    objects = ExplainQuerySet.as_manager()

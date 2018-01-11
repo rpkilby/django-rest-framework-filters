@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 import os
 import sys
+try:
+    import builtins
+except ImportError:
+    builtins = __builtins__
+
+
+if 'profile' not in builtins.__dict__:
+    builtins.__dict__['profile'] = lambda f: f
+
 
 # Remove the package root directory from `sys.path`, ensuring that rest_framework_filters
 # is imported from the installed site packages. Used for testing the distribution.
